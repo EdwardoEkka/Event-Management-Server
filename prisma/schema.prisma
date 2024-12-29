@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String    @id @default(cuid())
+  name     String
+  email    String    @unique
+  password String
+  role     UserRole @default(USER)
+  requests Request[] @relation("UserRequests") // Added relation field
+}
+
+model Event {
+  id                  String       @id @default(cuid())
+  title               String
+  description         String
+  date                DateTime
+  location            String
+  createdById         String
+  isAdminApproved     Boolean      @default(false)
+  isVenueApproved     Boolean      @default(false)
+  status              EventStatus  @default(PENDING)
+  isRequestedForApproval Boolean   @default(false) // New field added
+  requests            Request[]    @relation("EventRequests") // Relation field
+}
+
+
+model Request {
+  id        String       @id @default(cuid())
+  userId    String
+  eventId   String
+  message   String
+  adminId   String
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation("UserRequests", fields: [userId], references: [id]) // Specify inverse relation
+  event     Event         @relation("EventRequests", fields: [eventId], references: [id]) // Specify inverse relation
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
